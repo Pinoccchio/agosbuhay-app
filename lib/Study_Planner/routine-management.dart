@@ -1,24 +1,24 @@
 import 'dart:async';
-import 'package:flutter_app/Study_Planner/update_data.dart';
-import 'package:lottie/lottie.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore package
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:intl/intl.dart'; // Import intl package for date formatting
+import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
+import 'calendar-view.dart';
+import 'update_data.dart';
 
 class RoutineManagement extends StatefulWidget {
   final String studentNumber;
 
-  RoutineManagement({required this.studentNumber});
+  const RoutineManagement({Key? key, required this.studentNumber}) : super(key: key);
 
   @override
   _RoutineManagementState createState() => _RoutineManagementState();
 }
 
-class _RoutineManagementState extends State<RoutineManagement>
-    with SingleTickerProviderStateMixin {
+class _RoutineManagementState extends State<RoutineManagement> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   Timer? _taskCheckTimer;
 
@@ -32,7 +32,7 @@ class _RoutineManagementState extends State<RoutineManagement>
   @override
   void dispose() {
     _tabController.dispose();
-    _taskCheckTimer?.cancel(); // Stop the timer when the widget is disposed
+    _taskCheckTimer?.cancel();
     super.dispose();
   }
 
@@ -43,20 +43,29 @@ class _RoutineManagementState extends State<RoutineManagement>
         backgroundColor: Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
-        flexibleSpace: Center(
-          child: Text(
-            'Routine Management',
-            style: GoogleFonts.almarai(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+        title: Text(
+          'Routine Management',
+          style: GoogleFonts.almarai(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.calendar_today, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CalendarView(studentNumber: widget.studentNumber),
+                ),
+              );
+            },
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
@@ -93,23 +102,20 @@ class _RoutineManagementState extends State<RoutineManagement>
     );
   }
 
-  // Button to add a new task
   Widget _buildNewTaskButton() {
     return Container(
       margin: EdgeInsets.only(top: 10, right: 24),
       alignment: Alignment.centerRight,
       child: TextButton.icon(
-        onPressed: () {
-          // Show dialog when the button is clicked
-          _showNewTaskDialog(context);
-        },
+        onPressed: () => _showNewTaskDialog(context),
         icon: Icon(Icons.add, color: Color(0xFF57E597)),
         label: Text(
           'New Task',
           style: GoogleFonts.lato(
-              fontWeight: FontWeight.w700,
-              fontSize: 16,
-              color: Color(0xFF57E597)),
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+            color: Color(0xFF57E597),
+          ),
         ),
       ),
     );
@@ -117,8 +123,8 @@ class _RoutineManagementState extends State<RoutineManagement>
 
   void _showNewTaskDialog(BuildContext context) {
     final subjectController = TextEditingController();
-    final startDateTimeController = TextEditingController(); // For both date and time
-    final endDateTimeController = TextEditingController();   // For both date and time
+    final startDateTimeController = TextEditingController();
+    final endDateTimeController = TextEditingController();
     final detailsController = TextEditingController();
 
     showDialog(
@@ -127,13 +133,11 @@ class _RoutineManagementState extends State<RoutineManagement>
         final screenSize = MediaQuery.of(context).size;
 
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: Color(0xFF000000),
           child: Container(
-            width: screenSize.width * 0.9, // 90% of screen width
-            height: screenSize.height * 0.7, // 70% of screen height
+            width: screenSize.width * 0.9,
+            height: screenSize.height * 0.7,
             padding: const EdgeInsets.all(20.0),
             child: SingleChildScrollView(
               child: Column(
@@ -143,9 +147,7 @@ class _RoutineManagementState extends State<RoutineManagement>
                     children: [
                       IconButton(
                         icon: Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () {
-                          Navigator.of(context).pop(); // Close the dialog
-                        },
+                        onPressed: () => Navigator.of(context).pop(),
                       ),
                       SizedBox(width: 8),
                       Text(
@@ -171,41 +173,33 @@ class _RoutineManagementState extends State<RoutineManagement>
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF2FD1C5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: () async {
-                        // Validate if all fields are filled
                         if (subjectController.text.isEmpty ||
                             startDateTimeController.text.isEmpty ||
                             endDateTimeController.text.isEmpty ||
                             detailsController.text.isEmpty) {
-                          // Show error message if any field is empty
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Please fill in all fields.'),
-                              backgroundColor: Colors.red,
-                            ),
+                            SnackBar(content: Text('Please fill in all fields.'), backgroundColor: Colors.red),
                           );
-                          return; // Exit the function early
+                          return;
                         }
 
-                        // Save task to Firestore as DateTime
                         await FirebaseFirestore.instance
                             .collection('users')
                             .doc(widget.studentNumber)
                             .collection('to-do-files')
                             .add({
                           'subject': subjectController.text,
-                          'startTime': DateTime.parse(startDateTimeController.text), // Store as DateTime
-                          'endTime': DateTime.parse(endDateTimeController.text),   // Store as DateTime
+                          'startTime': DateTime.parse(startDateTimeController.text),
+                          'endTime': DateTime.parse(endDateTimeController.text),
                           'details': detailsController.text,
-                          'status': 'To Do', // Initial status
+                          'status': 'To Do',
                           'createdAt': FieldValue.serverTimestamp(),
                         });
 
-                        Navigator.of(context).pop(); // Close the dialog
+                        Navigator.of(context).pop();
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 15.0),
@@ -229,7 +223,6 @@ class _RoutineManagementState extends State<RoutineManagement>
     );
   }
 
-// Helper function to build input fields in the dialog
   Widget _buildDialogTextField(String labelText, {required TextEditingController controller}) {
     return TextField(
       controller: controller,
@@ -249,7 +242,6 @@ class _RoutineManagementState extends State<RoutineManagement>
     );
   }
 
-// Helper function to build DateTime picker
   Widget _buildDateTimePicker(String labelText, {required TextEditingController controller, required BuildContext context}) {
     return TextField(
       controller: controller,
@@ -283,14 +275,19 @@ class _RoutineManagementState extends State<RoutineManagement>
           );
 
           if (pickedTime != null) {
-            final DateTime finalDateTime = DateTime(pickedDate.year, pickedDate.month, pickedDate.day, pickedTime.hour, pickedTime.minute);
-            controller.text = finalDateTime.toIso8601String(); // Store full DateTime in ISO 8601 format
+            final DateTime finalDateTime = DateTime(
+              pickedDate.year,
+              pickedDate.month,
+              pickedDate.day,
+              pickedTime.hour,
+              pickedTime.minute,
+            );
+            controller.text = finalDateTime.toIso8601String();
           }
         }
       },
     );
   }
-
 
   Widget _buildTab(String text) {
     return Tab(
@@ -313,7 +310,7 @@ class _RoutineManagementState extends State<RoutineManagement>
           .collection('users')
           .doc(widget.studentNumber)
           .collection('to-do-files')
-          .where('status', isEqualTo: taskType) // Filter by status
+          .where('status', isEqualTo: taskType)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -327,43 +324,27 @@ class _RoutineManagementState extends State<RoutineManagement>
               children: [
                 Lottie.asset('assets/animated_icon/empty-animation.json', width: 200, height: 200),
                 SizedBox(height: 20),
-                Text('No tasks available.'),
+                Text('No tasks available.', style: TextStyle(color: Colors.white)),
               ],
             ),
           );
         }
 
         DateTime currentTime = DateTime.now();
-        final DateFormat dateFormat = DateFormat('MMM d, yyyy'); // Format date
-        final DateFormat timeFormat = DateFormat('h:mm a'); // Format time (e.g., 4:57 AM)
+        final DateFormat dateFormat = DateFormat('MMM d, yyyy');
+        final DateFormat timeFormat = DateFormat('h:mm a');
 
         return SingleChildScrollView(
           child: Column(
             children: snapshot.data!.docs.map((doc) {
               var data = doc.data() as Map<String, dynamic>;
 
-              // Initialize endTime with a default value (e.g., current time) to prevent the error
-              DateTime endTime = DateTime.now();
-              String endTimeString;
+              DateTime endTime = (data['endTime'] as Timestamp).toDate();
+              String endTimeString = '${dateFormat.format(endTime)} ${timeFormat.format(endTime)}';
 
-              // Parse endTime from Firestore (Timestamp or String)
-              if (data['endTime'] is Timestamp) {
-                endTime = (data['endTime'] as Timestamp).toDate();
-                endTimeString = '${dateFormat.format(endTime)} ${timeFormat.format(endTime)}'; // Include both date and time
-              } else {
-                // Handle string format and parse to DateTime if necessary
-                endTimeString = data['endTime']; // Assuming this is already a combined date and time string
-              }
+              DateTime startTime = (data['startTime'] as Timestamp).toDate();
+              String startTimeString = '${dateFormat.format(startTime)} ${timeFormat.format(startTime)}';
 
-              // Parse startTime from Firestore (Timestamp or String)
-              String startTimeString;
-              if (data['startTime'] is Timestamp) {
-                startTimeString = '${dateFormat.format((data['startTime'] as Timestamp).toDate())} ${timeFormat.format((data['startTime'] as Timestamp).toDate())}';
-              } else {
-                startTimeString = data['startTime']; // Assuming this is a combined date and time string
-              }
-
-              // Mark task as missed if past end time
               if (taskType != 'Completed' && endTime.isBefore(currentTime)) {
                 _markTaskAsMissed(doc.id);
               }
@@ -371,13 +352,13 @@ class _RoutineManagementState extends State<RoutineManagement>
               return _buildSection(
                 context,
                 sectionColor: _getColorForTaskType(taskType),
-                time: '$startTimeString - $endTimeString', // Show both startTime and endTime with date and time
+                time: '$startTimeString - $endTimeString',
                 title: data['subject'],
                 description: data['details'],
-                svgAsset: 'assets/vectors/vector_2_x2.svg', // Update as needed
+                svgAsset: 'assets/vectors/vector_2_x2.svg',
                 onActionTap: () => _showActionMenu(context, doc.id),
                 onCheckTap: () => _markTaskAsCompleted(doc.id),
-                showCheckIcon: taskType != 'Completed', // Hide check icon for completed tasks
+                showCheckIcon: taskType != 'Completed',
               );
             }).toList(),
           ),
@@ -401,8 +382,7 @@ class _RoutineManagementState extends State<RoutineManagement>
         DateTime endTime = (data['endTime'] as Timestamp).toDate();
 
         if (endTime.isBefore(currentTime)) {
-          _markTaskAsMissed(doc.id);  // Automatically mark task as "Missed"
-
+          _markTaskAsMissed(doc.id);
         }
       });
     });
@@ -417,7 +397,6 @@ class _RoutineManagementState extends State<RoutineManagement>
           .doc(docId)
           .update({'status': 'Missed'});
     } catch (e) {
-      // Handle error, if any
       print('Error updating task: $e');
     }
   }
@@ -438,7 +417,6 @@ class _RoutineManagementState extends State<RoutineManagement>
         ),
       );
     } catch (e) {
-      // Handle error, if any
       print('Error updating task: $e');
     }
   }
@@ -451,8 +429,8 @@ class _RoutineManagementState extends State<RoutineManagement>
         required String description,
         required String svgAsset,
         required VoidCallback onActionTap,
-        VoidCallback? onCheckTap, // Make it nullable
-        bool showCheckIcon = true, // Add a flag to control icon visibility
+        VoidCallback? onCheckTap,
+        bool showCheckIcon = true,
       }) {
     return Container(
       margin: EdgeInsets.fromLTRB(22, 0, 24, 26),
@@ -460,6 +438,7 @@ class _RoutineManagementState extends State<RoutineManagement>
         border: Border.all(color: sectionColor),
         borderRadius: BorderRadius.circular(12),
         color: Color(0xFFFFFFFF),
+
         boxShadow: [
           BoxShadow(
             color: Color(0x0D1C252C),
@@ -487,10 +466,10 @@ class _RoutineManagementState extends State<RoutineManagement>
             ),
           ),
           Container(
-            padding: EdgeInsets.fromLTRB(24, 11, 24, 11), // Adjusted padding
+            padding: EdgeInsets.fromLTRB(24, 11, 24, 11),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Aligns content and pushes icons to the right
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Row(
@@ -544,7 +523,7 @@ class _RoutineManagementState extends State<RoutineManagement>
                 SizedBox(width: 10),
                 Row(
                   children: [
-                    if (showCheckIcon) // Conditionally show the check icon
+                    if (showCheckIcon)
                       IconButton(
                         icon: Icon(Icons.check, color: Colors.green, size: 24),
                         onPressed: onCheckTap,
@@ -553,7 +532,7 @@ class _RoutineManagementState extends State<RoutineManagement>
                     GestureDetector(
                       onTap: onActionTap,
                       child: Icon(
-                        Icons.more_vert, // Vertical icon
+                        Icons.more_vert,
                         size: 24,
                       ),
                     ),
@@ -566,7 +545,6 @@ class _RoutineManagementState extends State<RoutineManagement>
       ),
     );
   }
-
 
   void _showActionMenu(BuildContext context, String docId) {
     showModalBottomSheet(
@@ -624,139 +602,11 @@ class _RoutineManagementState extends State<RoutineManagement>
     );
   }
 
-  /*
-  void _showEditTaskDialog(BuildContext context, String docId) {
-    FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.studentNumber) // Use widget here
-        .collection('to-do-files')
-        .doc(docId)
-        .get()
-        .then((doc) {
-      if (!mounted) return;
-
-      var data = doc.data() as Map<String, dynamic>;
-
-      var subjectController = TextEditingController(text: data['subject']);
-      var startTimeController = TextEditingController(
-        text: data['startTime'] is Timestamp
-            ? data['startTime'].toDate().toString()
-            : data['startTime'],
-      );
-      var endTimeController = TextEditingController(
-        text: data['endTime'] is Timestamp
-            ? data['endTime'].toDate().toString()
-            : data['endTime'],
-      );
-      var detailsController = TextEditingController(text: data['details']);
-
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: Colors.black, // Set your desired color
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        builder: (context) {
-          return Padding(
-            padding: EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: subjectController,
-                  decoration: InputDecoration(labelText: 'Subject'),
-                  onChanged: (value) {
-                    data['subject'] = value;
-                  },
-                ),
-                TextField(
-                  controller: startTimeController,
-                  decoration: InputDecoration(labelText: 'Start Time'),
-                  onChanged: (value) {
-                    data['startTime'] = value;
-                  },
-                ),
-                TextField(
-                  controller: endTimeController,
-                  decoration: InputDecoration(labelText: 'End Time'),
-                  onChanged: (value) {
-                    data['endTime'] = value;
-                  },
-                ),
-                TextField(
-                  controller: detailsController,
-                  decoration: InputDecoration(labelText: 'Details'),
-                  onChanged: (value) {
-                    data['details'] = value;
-                  },
-                ),
-                SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () async {
-                        try {
-                          await FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(widget.studentNumber)
-                              .collection('to-do-files')
-                              .doc(docId)
-                              .update(data);
-
-                          Navigator.pop(context); // Close the bottom sheet
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Task updated successfully'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Failed to update task'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      },
-                      child: Text('Update'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    }).catchError((error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to fetch task data'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    });
-  }
-
-   */
-
   void _deleteTask(BuildContext context, String docId) async {
     try {
       await FirebaseFirestore.instance
           .collection('users')
-          .doc(widget.studentNumber) // Use widget here
+          .doc(widget.studentNumber)
           .collection('to-do-files')
           .doc(docId)
           .delete();
@@ -785,11 +635,11 @@ class _RoutineManagementState extends State<RoutineManagement>
 Color _getColorForTaskType(String taskType) {
   switch (taskType) {
     case 'To Do':
-      return Color(0xFFC4D7FF); // Updated color for "To Do"
+      return Color(0xFFC4D7FF);
     case 'Missed':
-      return Colors.red; // Red for "Missed"
+      return Colors.red;
     case 'Completed':
-      return Color(0xFF57E597); // Updated color for "Completed"
+      return Color(0xFF57E597);
     default:
       return Colors.grey;
   }

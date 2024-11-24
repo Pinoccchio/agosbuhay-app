@@ -15,6 +15,13 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+  // Set system UI overlay style for dark mode
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.black, // Set the status bar background color
+    statusBarIconBrightness: Brightness.light, // Set status bar icon color to white
+    statusBarBrightness: Brightness.dark, // For iOS compatibility
+  ));
+
   // Initialize time zones and notifications
   tz.initializeTimeZones();
   NotificationHandler notificationHandler = NotificationHandler();
@@ -23,7 +30,7 @@ void main() async {
   // Request notification permissions
   await notificationHandler.requestNotificationPermissions();
 
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
